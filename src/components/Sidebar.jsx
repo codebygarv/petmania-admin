@@ -33,22 +33,29 @@ export default function Sidebar() {
       title: "Home",
       links: [
         { to: "/", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
-        { to: "/projects", label: "Projects", icon: <Folder size={16} /> },
-        { to: "/team", label: "Team", icon: <Users size={16} /> },
+        { to: "/users", label: "Users", icon: <Users  size={16} /> },
       ],
     },
-    {
-      title: "Documents",
-      links: [
-        { to: "/Login", label: "Login", icon: <Database size={16} /> },
-        { to: "/reports", label: "Reports", icon: <FileText size={16} /> },
-        {
-          to: "/word-assistant",
-          label: "Word Assistant",
-          icon: <FileText size={16} />,
-        },
-      ],
-    },
+    // {
+    //   title: "Home",
+    //   links: [
+    //     { to: "/", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
+    //     { to: "/projects", label: "Projects", icon: <Folder size={16} /> },
+    //     { to: "/team", label: "Team", icon: <Users size={16} /> },
+    //   ],
+    // },
+    // {
+    //   title: "Documents",
+    //   links: [
+    //     { to: "/Login", label: "Login", icon: <Database size={16} /> },
+    //     { to: "/reports", label: "Reports", icon: <FileText size={16} /> },
+    //     {
+    //       to: "/word-assistant",
+    //       label: "Word Assistant",
+    //       icon: <FileText size={16} />,
+    //     },
+    //   ],
+    // },
   ];
 
   const bottomLinks = [
@@ -77,10 +84,9 @@ export default function Sidebar() {
                       key={link.to}
                       to={link.to}
                       className={({ isActive }) =>
-                        `flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-all duration-200 ${
-                          isActive
-                            ? "bg-orange-500/20 text-orange-400"
-                            : "text-gray-300 hover:bg-orange-500/10 hover:text-orange-400"
+                        `flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-all duration-200 ${isActive
+                          ? "bg-orange-500/20 text-orange-400"
+                          : "text-gray-300 hover:bg-orange-500/10 hover:text-orange-400"
                         }`
                       }
                     >
@@ -101,10 +107,9 @@ export default function Sidebar() {
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-all duration-200 ${
-                  isActive
-                    ? "bg-orange-500/20 text-orange-400"
-                    : "text-gray-300 hover:bg-orange-500/10 hover:text-orange-400"
+                `flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-all duration-200 ${isActive
+                  ? "bg-orange-500/20 text-orange-400"
+                  : "text-gray-300 hover:bg-orange-500/10 hover:text-orange-400"
                 }`
               }
             >
