@@ -61,7 +61,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div>
           <div className="p-3 text-lg font-semibold flex items-center gap-1.5 border-b border-white/10">
-            🐕 PetMania
+            Admin Dashboard
           </div>
 
           {/* Navigation */}
@@ -125,8 +125,8 @@ export default function Sidebar() {
                 className="w-7 h-7 rounded-full border border-orange-500/40"
               />
               <div>
-                <p className="text-[13px] font-semibold">petmania</p>
-                <p className="text-[11px] text-gray-400">abc@gmail.com</p>
+                <p className="text-[13px] font-semibold">codebygarv</p>
+                <p className="text-[11px] text-gray-400">codebygarv@gmail.com</p>
               </div>
             </div>
             <MoreHorizontal size={18} />
@@ -145,8 +145,8 @@ export default function Sidebar() {
                   className="w-10 h-10 rounded-full"
                 />
                 <div>
-                  <h4 className="text-[14px] font-semibold">petmania</h4>
-                  <p className="text-[11px] text-gray-400">abc@gmail.com</p>
+                  <h4 className="text-[14px] font-semibold">codebygarv</h4>
+                  <p className="text-[11px] text-gray-400">codebygarv@gmail.com</p>
                 </div>
               </div>
 
