@@ -33,29 +33,22 @@ export default function Sidebar() {
       title: "Home",
       links: [
         { to: "/", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
-        { to: "/users", label: "Users", icon: <Users  size={16} /> },
+        { to: "/projects", label: "Projects", icon: <Folder size={16} /> },
+        { to: "/team", label: "Team", icon: <Users size={16} /> },
       ],
     },
-    // {
-    //   title: "Home",
-    //   links: [
-    //     { to: "/", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
-    //     { to: "/projects", label: "Projects", icon: <Folder size={16} /> },
-    //     { to: "/team", label: "Team", icon: <Users size={16} /> },
-    //   ],
-    // },
-    // {
-    //   title: "Documents",
-    //   links: [
-    //     { to: "/Login", label: "Login", icon: <Database size={16} /> },
-    //     { to: "/reports", label: "Reports", icon: <FileText size={16} /> },
-    //     {
-    //       to: "/word-assistant",
-    //       label: "Word Assistant",
-    //       icon: <FileText size={16} />,
-    //     },
-    //   ],
-    // },
+    {
+      title: "Documents",
+      links: [
+        { to: "/Login", label: "Login", icon: <Database size={16} /> },
+        { to: "/reports", label: "Reports", icon: <FileText size={16} /> },
+        {
+          to: "/word-assistant",
+          label: "Word Assistant",
+          icon: <FileText size={16} />,
+        },
+      ],
+    },
   ];
 
   const bottomLinks = [
@@ -68,7 +61,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div>
           <div className="p-3 text-lg font-semibold flex items-center gap-1.5 border-b border-white/10">
-            🐕 PetMania
+            Admin Dashboard
           </div>
 
           {/* Navigation */}
@@ -84,9 +77,10 @@ export default function Sidebar() {
                       key={link.to}
                       to={link.to}
                       className={({ isActive }) =>
-                        `flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-all duration-200 ${isActive
-                          ? "bg-orange-500/20 text-orange-400"
-                          : "text-gray-300 hover:bg-orange-500/10 hover:text-orange-400"
+                        `flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-all duration-200 ${
+                          isActive
+                            ? "bg-orange-500/20 text-orange-400"
+                            : "text-gray-300 hover:bg-orange-500/10 hover:text-orange-400"
                         }`
                       }
                     >
@@ -107,9 +101,10 @@ export default function Sidebar() {
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-all duration-200 ${isActive
-                  ? "bg-orange-500/20 text-orange-400"
-                  : "text-gray-300 hover:bg-orange-500/10 hover:text-orange-400"
+                `flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] transition-all duration-200 ${
+                  isActive
+                    ? "bg-orange-500/20 text-orange-400"
+                    : "text-gray-300 hover:bg-orange-500/10 hover:text-orange-400"
                 }`
               }
             >
@@ -130,8 +125,8 @@ export default function Sidebar() {
                 className="w-7 h-7 rounded-full border border-orange-500/40"
               />
               <div>
-                <p className="text-[13px] font-semibold">petmania</p>
-                <p className="text-[11px] text-gray-400">abc@gmail.com</p>
+                <p className="text-[13px] font-semibold">codebygarv</p>
+                <p className="text-[11px] text-gray-400">codebygarv@gmail.com</p>
               </div>
             </div>
             <MoreHorizontal size={18} />
@@ -150,8 +145,8 @@ export default function Sidebar() {
                   className="w-10 h-10 rounded-full"
                 />
                 <div>
-                  <h4 className="text-[14px] font-semibold">petmania</h4>
-                  <p className="text-[11px] text-gray-400">abc@gmail.com</p>
+                  <h4 className="text-[14px] font-semibold">codebygarv</h4>
+                  <p className="text-[11px] text-gray-400">codebygarv@gmail.com</p>
                 </div>
               </div>
 

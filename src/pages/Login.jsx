@@ -38,7 +38,7 @@ export default function Login() {
     <div className="max-w-sm mx-auto mt-16">
       <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-md">
         <h2 className="text-lg font-semibold text-white mb-1">Sign in</h2>
-        <p className="text-gray-400 mb-4 ">
+        <p className="text-gray-400 mb-4 text-xs">
           Enter your credentials to continue
         </p>
 
