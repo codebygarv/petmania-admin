@@ -33,20 +33,13 @@ export default function Sidebar() {
       title: "Home",
       links: [
         { to: "/", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
-        { to: "/projects", label: "Projects", icon: <Folder size={16} /> },
         { to: "/team", label: "Team", icon: <Users size={16} /> },
       ],
     },
     {
-      title: "Documents",
+      title: "User Management",
       links: [
-        { to: "/Login", label: "Login", icon: <Database size={16} /> },
-        { to: "/reports", label: "Reports", icon: <FileText size={16} /> },
-        {
-          to: "/word-assistant",
-          label: "Word Assistant",
-          icon: <FileText size={16} />,
-        },
+        { to: "/users", label: "Users", icon: <Users size={16} /> },
       ],
     },
   ];
