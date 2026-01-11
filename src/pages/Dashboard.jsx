@@ -393,6 +393,12 @@ export default function Dashboard() {
                   </div>
                 </th>
 
+                <th className="px-3 py-2 cursor-pointer" onClick={() => toggleSort("email")}>
+                  <div className="flex items-center gap-2">
+                    Email
+                    {sortBy.key === "email" ? (sortBy.dir === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : null}
+                  </div>
+                </th>
 
                 <th className="px-3 py-2 cursor-pointer" onClick={() => toggleSort("status")}>
                   <div className="flex items-center gap-2">

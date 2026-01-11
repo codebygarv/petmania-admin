@@ -5,7 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Layout from "./components/Layout";
 import "./App.css";
-import Users from "./pages/Users";
+import Users from "./pages/Users.jsx";
 
 export default function App() {
   return (
