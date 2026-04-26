@@ -1,549 +1,426 @@
-import React, { useMemo, useState } from "react";
-import { TrendingUp, TrendingDown, ChevronUp, ChevronDown, MoreHorizontal, Trash2, User, Edit2, Eye } from "lucide-react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+  Users,
+  CheckCircle,
+  XCircle,
+  PawPrint,
+  Clock,
+  ShieldCheck,
+  TrendingUp,
+  UserPlus,
+  Calendar,
+  Heart,
+  Home,
+  Activity,
+  Award,
+  AlertCircle,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { adminDashboardApi } from "../api/adminService";
+import { CardSkeleton } from "../components/ui/Skeleton";
 
-/**
- * Dashboard.jsx
- * Self-contained Dashboard with chart + user-management table (static data).
- *
- * Notes:
- * - Uses TailwindCSS classes everywhere.
- * - Ensure recharts & lucide-react are installed.
- */
-
-/* -------------------------
-   Sample chart data
-   ------------------------- */
-const chartData = [
-  { name: "Jan", visitors: 400 },
-  { name: "Feb", visitors: 300 },
-  { name: "Mar", visitors: 600 },
-  { name: "Apr", visitors: 800 },
-  { name: "May", visitors: 500 },
-  { name: "Jun", visitors: 900 },
-];
-
-/* -------------------------
-   Sample static user data
-   ------------------------- */
-const initialUsers = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    status: "Active",
-    reviewer: "Alice",
-    joined: "2025-01-10",
-  },
-  {
-    id: 2,
-    name: "Sarah Lee",
-    email: "sarah.lee@example.com",
-    status: "In Process",
-    reviewer: "Bob",
-    joined: "2025-01-12",
-  },
-  {
-    id: 3,
-    name: "Michael Brown",
-    email: "michael.brown@example.com",
-    status: "Active",
-    reviewer: "Charlie",
-    joined: "2025-02-05",
-  },
-  {
-    id: 4,
-    name: "Priya Sharma",
-    email: "priya.sharma@example.com",
-    status: "Pending",
-    reviewer: "Alice",
-    joined: "2025-03-02",
-  },
-  {
-    id: 5,
-    name: "Carlos Ruiz",
-    email: "carlos.ruiz@example.com",
-    status: "Active",
-    reviewer: "Bob",
-    joined: "2025-03-18",
-  },
-  {
-    id: 6,
-    name: "Aisha Khan",
-    email: "aisha.khan@example.com",
-    status: "In Process",
-    reviewer: "Charlie",
-    joined: "2025-04-01",
-  },
-  {
-    id: 7,
-    name: "Liam O'Neil",
-    email: "liam.oneil@example.com",
-    status: "Active",
-    reviewer: "Bob",
-    joined: "2025-04-15",
-  },
-  {
-    id: 8,
-    name: "Eva Novak",
-    email: "eva.novak@example.com",
-    status: "Pending",
-    reviewer: "Alice",
-    joined: "2025-05-08",
-  },
-];
-
-/* -------------------------
-   Helper utilities
-   ------------------------- */
-const STATUS_STYLES = {
-  Active: "bg-green-500/10 text-green-400",
-  "In Process": "bg-orange-500/10 text-orange-400",
-  Pending: "bg-yellow-500/10 text-yellow-400",
-};
-
-/* format date */
-function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
-
-/* compare values for sorting */
-function compareValues(a, b, direction = "asc") {
-  if (a === b) return 0;
-  if (a === null || a === undefined) return 1;
-  if (b === null || b === undefined) return -1;
-  if (typeof a === "string" && typeof b === "string") {
-    const res = a.localeCompare(b);
-    return direction === "asc" ? res : -res;
-  }
-  return direction === "asc" ? (a > b ? 1 : -1) : a > b ? -1 : 1;
-}
-
-/* -------------------------
-   Dashboard Component
-   ------------------------- */
 export default function Dashboard() {
-  // Chart tab
-  const [activeTab, setActiveTab] = useState("30");
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["dashboardStats"],
+    queryFn: () => adminDashboardApi.getStats(),
+    retry: 1,
+  });
 
-  // Table states
-  const [users, setUsers] = useState(initialUsers);
-  const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState({ key: "name", dir: "asc" });
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 5;
-  const [selectedIds, setSelectedIds] = useState(new Set());
-  const [reviewers] = useState(["Alice", "Bob", "Charlie", "Unassigned"]);
-  const [bulkReviewer, setBulkReviewer] = useState("");
-
-  /* -------- derived filtered & sorted users ---------- */
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return users.filter((u) => {
-      if (!q) return true;
-      return (
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q)
-      );
-    });
-  }, [users, query]);
-
-  const sorted = useMemo(() => {
-    const arr = [...filtered];
-    arr.sort((a, b) => {
-      let aVal = a[sortBy.key];
-      let bVal = b[sortBy.key];
-      // if sorting by joined date, compare date objects
-      if (sortBy.key === "joined") {
-        aVal = new Date(aVal).getTime();
-        bVal = new Date(bVal).getTime();
-      } else {
-        aVal = aVal?.toString() ?? "";
-        bVal = bVal?.toString() ?? "";
-      }
-      return compareValues(aVal, bVal, sortBy.dir);
-    });
-    return arr;
-  }, [filtered, sortBy]);
-
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-  const paginated = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return sorted.slice(start, start + PAGE_SIZE);
-  }, [sorted, page]);
-
-  /* -------------- handlers ---------------- */
-  function toggleSort(key) {
-    setPage(1);
-    setSortBy((prev) => {
-      if (prev.key === key) {
-        return { key, dir: prev.dir === "asc" ? "desc" : "asc" };
-      }
-      return { key, dir: "asc" };
-    });
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-50">Dashboard</h1>
+          <p className="text-sm text-neutral-400 mt-1">
+            Welcome back! Here's what's happening today.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  function toggleSelectAllOnPage() {
-    const currentIds = paginated.map((u) => u.id);
-    const allSelected = currentIds.every((id) => selectedIds.has(id));
-    const newSet = new Set(selectedIds);
-    if (allSelected) {
-      currentIds.forEach((id) => newSet.delete(id));
-    } else {
-      currentIds.forEach((id) => newSet.add(id));
-    }
-    setSelectedIds(newSet);
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-red-400">Failed to load dashboard data</p>
+        <p className="text-sm text-neutral-500">Please check if the backend server is running</p>
+      </div>
+    );
   }
 
-  function toggleSelect(id) {
-    const newSet = new Set(selectedIds);
-    if (newSet.has(id)) newSet.delete(id);
-    else newSet.add(id);
-    setSelectedIds(newSet);
-  }
+  const stats = data?.data || {};
 
-  function deleteUser(id) {
-    if (!window.confirm("Delete this user?")) return;
-    setUsers((prev) => prev.filter((u) => u.id !== id));
-    // also remove from selection
-    setSelectedIds((s) => {
-      const copy = new Set(s);
-      copy.delete(id);
-      return copy;
-    });
-  }
+  // Calculate rates and derived metrics
+  const emailVerificationRate = stats.totalUsers
+    ? Math.round(((stats.verifiedUsers || 0) / stats.totalUsers) * 100)
+    : 0;
+  const aadharRate = stats.totalUsers
+    ? Math.round(((stats.adharVerifiedUsers || 0) / stats.totalUsers) * 100)
+    : 0;
+  const petApprovalRate = stats.totalPets
+    ? Math.round(((stats.approvedPets || 0) / stats.totalPets) * 100)
+    : 0;
+  const adoptionRate = stats.totalPets
+    ? Math.round(((stats.adoptedPets || 0) / stats.totalPets) * 100)
+    : 0;
 
-  function bulkDelete() {
-    if (selectedIds.size === 0) return alert("Select some rows first.");
-    if (!window.confirm("Delete selected users?")) return;
-    setUsers((prev) => prev.filter((u) => !selectedIds.has(u.id)));
-    setSelectedIds(new Set());
-  }
+  const overallScore = stats.totalUsers
+    ? Math.round((emailVerificationRate + aadharRate + petApprovalRate) / 3)
+    : 0;
 
-  function assignReviewerToRow(id, reviewer) {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, reviewer } : u)));
-  }
+  const pendingUsers = (stats.totalUsers || 0) - (stats.verifiedUsers || 0);
+  const pendingPets = stats.pendingPets || 0;
+  const unverifiedUsers = (stats.totalUsers || 0) - (stats.adharVerifiedUsers || 0);
 
-  function bulkAssignReviewer() {
-    if (selectedIds.size === 0) return alert("Select some rows first.");
-    if (!bulkReviewer) return alert("Choose a reviewer to assign.");
-    setUsers((prev) => prev.map((u) => (selectedIds.has(u.id) ? { ...u, reviewer: bulkReviewer } : u)));
-    setBulkReviewer("");
-    setSelectedIds(new Set());
-  }
+  const statCards = [
+    {
+      title: "Total Users",
+      value: stats.totalUsers || 0,
+      icon: Users,
+      color: "text-blue-400",
+      bgColor: "bg-blue-500/10",
+      borderColor: "border-blue-500/20",
+      href: "/users",
+    },
+    {
+      title: "Total Pets",
+      value: stats.totalPets || 0,
+      icon: PawPrint,
+      color: "text-purple-400",
+      bgColor: "bg-purple-500/10",
+      borderColor: "border-purple-500/20",
+      href: "/pets",
+    },
+    {
+      title: "Aadhar Verified",
+      value: `${aadharRate}%`,
+      subtitle: `${stats.adharVerifiedUsers || 0} users`,
+      icon: ShieldCheck,
+      color: "text-emerald-400",
+      bgColor: "bg-emerald-500/10",
+      borderColor: "border-emerald-500/20",
+      href: "/users",
+    },
+    {
+      title: "Adoption Rate",
+      value: `${adoptionRate}%`,
+      subtitle: `${stats.adoptedPets || 0} pets adopted`,
+      icon: Heart,
+      color: "text-pink-400",
+      bgColor: "bg-pink-500/10",
+      borderColor: "border-pink-500/20",
+      href: "/pets",
+    },
+  ];
 
-  function handleView(user) {
-    alert(`View user: ${user.name}\nEmail: ${user.email}\nReviewer: ${user.reviewer}`);
-  }
-
-  function handleEdit(user) {
-    const newName = prompt("Edit name", user.name);
-    if (newName && newName.trim()) {
-      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, name: newName.trim() } : u)));
-    }
-  }
-
-  /* -------------------------
-     Render
-     ------------------------- */
   return (
-    <div className="space-y-8 p-4">
-      {/* Top Metrics Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { title: "Users", value: "1,245", change: "+12.5%", type: "up", sub: "This month" },
-          { title: "Revenue", value: "$24.3k", change: "-3.2%", type: "down", sub: "Last 30 days" },
-          { title: "Orders", value: "342", change: "+8.1%", type: "up", sub: "This period" },
-          { title: "Active", value: "98%", change: "+1.2%", type: "up", sub: "Engagement" },
-        ].map((m, i) => (
-          <div key={i} className="bg-[#111111] border border-white/10 rounded-2xl p-4 shadow-sm text-white">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-xs text-gray-400 uppercase">{m.title}</div>
-              <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${m.type === "up" ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`}>
-                {m.type === "up" ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                <span>{m.change}</span>
-              </div>
-            </div>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-50">Dashboard</h1>
+          <p className="text-sm text-neutral-400 mt-1">
+            Welcome back! Here's what's happening today.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800 rounded-lg border border-neutral-700">
+          <Calendar size={14} className="text-neutral-400" />
+          <span className="text-xs text-neutral-300">
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        </div>
+      </div>
 
-            <div className="text-2xl lg:text-3xl font-bold mb-2">{m.value}</div>
-            <div className="text-xs text-gray-400 flex items-center gap-2">
-              <span>{m.sub}</span>
-              <TrendingUp size={14} className="text-orange-400" />
+      {/* Platform Health Score */}
+      <div className="bg-gradient-to-br from-orange-500/10 via-neutral-900 to-neutral-900 border border-orange-500/20 rounded-2xl p-6">
+        <div className="flex items-center gap-4">
+          <div className="p-4 rounded-2xl bg-orange-500/20">
+            <Award size={32} className="text-orange-400" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-lg font-semibold text-neutral-50">Platform Health Score</h2>
+              <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-xs font-medium rounded-full">
+                Live
+              </span>
+            </div>
+            <p className="text-sm text-neutral-400 mb-3">
+              Overall verification and approval health of the platform
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-3 bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-orange-500 to-yellow-400 rounded-full transition-all duration-700"
+                  style={{ width: `${overallScore}%` }}
+                />
+              </div>
+              <span className="text-xl font-bold text-orange-400">{overallScore}%</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((stat, index) => (
+          <Link
+            key={index}
+            to={stat.href}
+            className={`group bg-neutral-900 border ${stat.borderColor} rounded-2xl p-5 hover:border-orange-500/40 transition-all duration-300`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-neutral-400 uppercase tracking-wide">
+                  {stat.title}
+                </p>
+                <p className="text-3xl font-bold text-neutral-50 mt-1">
+                  {stat.value}
+                </p>
+                {stat.subtitle && (
+                  <p className="text-xs text-neutral-500 mt-0.5">{stat.subtitle}</p>
+                )}
+              </div>
+              <div className={`p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform`}>
+                <stat.icon size={22} className={stat.color} />
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-1">
+              <TrendingUp size={12} className="text-neutral-500" />
+              <span className="text-xs text-neutral-500">View details</span>
+            </div>
+          </Link>
         ))}
       </div>
 
-      {/* Visitors Chart Section */}
-      <div className="bg-[#111111] border border-white/10 rounded-2xl p-4 shadow text-white">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-3">
-          <div>
-            <h3 className="text-lg font-semibold">Total Visitors</h3>
-            <p className="text-gray-500 text-sm">Total for the selected range</p>
+      {/* Three Column Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Pending Actions */}
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-semibold text-neutral-50">
+              Pending Actions
+            </h2>
+            <Clock size={18} className="text-orange-400" />
           </div>
 
-          <div className="flex gap-2 mt-3 lg:mt-0">
-            {[
-              { label: "Last 3 months", key: "90" },
-              { label: "Last 30 days", key: "30" },
-              { label: "Last 7 days", key: "7" },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                className={`px-3 py-1.5 rounded-md text-sm border transition ${
-                  activeTab === tab.key
-                    ? "bg-white text-black"
-                    : "bg-transparent border-white/10 text-gray-300"
-                }`}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="space-y-3">
+            <Link
+              to="/users"
+              className="flex items-center justify-between p-4 bg-neutral-800/50 rounded-xl hover:bg-neutral-800 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-yellow-500/10">
+                  <UserPlus size={18} className="text-yellow-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-neutral-200">
+                    User Verifications
+                  </p>
+                  <p className="text-xs text-neutral-500">
+                    {pendingUsers} email, {unverifiedUsers} Aadhar
+                  </p>
+                </div>
+              </div>
+              <div className="px-2.5 py-1 bg-yellow-500/10 text-yellow-400 text-xs font-semibold rounded-full">
+                {pendingUsers + unverifiedUsers}
+              </div>
+            </Link>
+
+            <Link
+              to="/pets"
+              className="flex items-center justify-between p-4 bg-neutral-800/50 rounded-xl hover:bg-neutral-800 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-orange-500/10">
+                  <PawPrint size={18} className="text-orange-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-neutral-200">
+                    Pet Approvals
+                  </p>
+                  <p className="text-xs text-neutral-500">
+                    {pendingPets} listings awaiting review
+                  </p>
+                </div>
+              </div>
+              <div className="px-2.5 py-1 bg-orange-500/10 text-orange-400 text-xs font-semibold rounded-full">
+                {pendingPets}
+              </div>
+            </Link>
           </div>
         </div>
 
-        <div className="h-60">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="visitorGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ffa500" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#ffa500" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="name" stroke="#555" />
-              <CartesianGrid stroke="#222" strokeDasharray="3 3" />
-              <Tooltip contentStyle={{ backgroundColor: "#111", border: "1px solid #222" }} />
-              <Area type="monotone" dataKey="visitors" stroke="#ffa500" fill="url(#visitorGradient)" />
-            </AreaChart>
-          </ResponsiveContainer>
+        {/* Verification Breakdown */}
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-semibold text-neutral-50">
+              Verification Breakdown
+            </h2>
+            <ShieldCheck size={18} className="text-emerald-400" />
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-300">Email Verified</span>
+                <span className="text-sm font-semibold text-neutral-100">
+                  {stats.verifiedUsers || 0}/{stats.totalUsers || 0}
+                </span>
+              </div>
+              <div className="h-2.5 bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full"
+                  style={{ width: `${emailVerificationRate}%` }}
+                />
+              </div>
+              <div className="flex justify-end">
+                <span className="text-xs text-neutral-500">{emailVerificationRate}%</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-300">Aadhar Verified</span>
+                <span className="text-sm font-semibold text-neutral-100">
+                  {stats.adharVerifiedUsers || 0}/{stats.totalUsers || 0}
+                </span>
+              </div>
+              <div className="h-2.5 bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
+                  style={{ width: `${aadharRate}%` }}
+                />
+              </div>
+              <div className="flex justify-end">
+                <span className="text-xs text-neutral-500">{aadharRate}%</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-300">Pets Approved</span>
+                <span className="text-sm font-semibold text-neutral-100">
+                  {stats.approvedPets || 0}/{stats.totalPets || 0}
+                </span>
+              </div>
+              <div className="h-2.5 bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-500 to-pink-400 rounded-full"
+                  style={{ width: `${petApprovalRate}%` }}
+                />
+              </div>
+              <div className="flex justify-end">
+                <span className="text-xs text-neutral-500">{petApprovalRate}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Pet Distribution */}
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-semibold text-neutral-50">
+              Pet Distribution
+            </h2>
+            <Activity size={18} className="text-purple-400" />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-neutral-800/50 rounded-xl">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-orange-400" />
+                <span className="text-sm text-neutral-300">Available</span>
+              </div>
+              <span className="text-sm font-semibold text-neutral-100">
+                {stats.approvedPets || 0}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-neutral-800/50 rounded-xl">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                <span className="text-sm text-neutral-300">Pending Approval</span>
+              </div>
+              <span className="text-sm font-semibold text-neutral-100">
+                {pendingPets}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-neutral-800/50 rounded-xl">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-400" />
+                <span className="text-sm text-neutral-300">Adopted</span>
+              </div>
+              <span className="text-sm font-semibold text-neutral-100">
+                {stats.adoptedPets || 0}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-neutral-800/50 rounded-xl">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-400" />
+                <span className="text-sm text-neutral-300">Total Listings</span>
+              </div>
+              <span className="text-sm font-semibold text-neutral-100">
+                {stats.totalPets || 0}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* User Management Table */}
-      <div className="bg-[#111111] border border-white/10 rounded-2xl p-4 shadow text-white">
-        <div className="flex items-center justify-between mb-4">
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-orange-500/10">
+            <AlertCircle size={20} className="text-orange-400" />
+          </div>
           <div>
-            <h3 className="text-lg font-semibold">User Management</h3>
-            <p className="text-gray-500 text-sm">Manage users, assign reviewers, and bulk actions</p>
-          </div>
-
-          {/* Bulk controls */}
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Search name or email..."
-              value={query}
-              onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-              className="bg-white/3 placeholder-gray-400 text-sm px-3 py-2 rounded-md outline-none border border-white/8"
-            />
-
-            <select
-              value={bulkReviewer}
-              onChange={(e) => setBulkReviewer(e.target.value)}
-              className="bg-white/3 text-sm px-2 py-2 rounded-md border border-white/8"
-            >
-              <option value="">Bulk assign reviewer</option>
-              {reviewers.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
-
-            <button
-              onClick={bulkAssignReviewer}
-              className="px-3 py-2 bg-orange-600/90 text-white rounded-md text-sm hover:opacity-95"
-            >
-              Assign
-            </button>
-
-            <button
-              onClick={bulkDelete}
-              className="px-3 py-2 bg-red-600/80 text-white rounded-md text-sm hover:opacity-95 flex items-center gap-2"
-            >
-              <Trash2 size={14} /> Delete
-            </button>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Pending Pets</p>
+            <p className="text-xl font-bold text-neutral-50 mt-0.5">{pendingPets}</p>
           </div>
         </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="text-xs text-gray-400">
-                <th className="px-3 py-2">
-                  <input
-                    type="checkbox"
-                    onChange={toggleSelectAllOnPage}
-                    checked={paginated.every((u) => selectedIds.has(u.id)) && paginated.length > 0}
-                    className="w-4 h-4"
-                  />
-                </th>
-
-                <th className="px-3 py-2 cursor-pointer" onClick={() => toggleSort("name")}>
-                  <div className="flex items-center gap-2">
-                    Name
-                    {sortBy.key === "name" ? (sortBy.dir === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : null}
-                  </div>
-                </th>
-
-                <th className="px-3 py-2 cursor-pointer" onClick={() => toggleSort("email")}>
-                  <div className="flex items-center gap-2">
-                    Email
-                    {sortBy.key === "email" ? (sortBy.dir === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : null}
-                  </div>
-                </th>
-
-                <th className="px-3 py-2 cursor-pointer" onClick={() => toggleSort("status")}>
-                  <div className="flex items-center gap-2">
-                    Status
-                    {sortBy.key === "status" ? (sortBy.dir === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : null}
-                  </div>
-                </th>
-
-                <th className="px-3 py-2">Reviewer</th>
-
-                <th className="px-3 py-2 cursor-pointer" onClick={() => toggleSort("joined")}>
-                  <div className="flex items-center gap-2">
-                    Joined
-                    {sortBy.key === "joined" ? (sortBy.dir === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : null}
-                  </div>
-                </th>
-
-                <th className="px-3 py-2">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-white/6">
-              {paginated.map((u) => (
-                <tr key={u.id} className="hover:bg-white/3">
-                  <td className="px-3 py-3 align-middle">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(u.id)}
-                      onChange={() => toggleSelect(u.id)}
-                      className="w-4 h-4"
-                    />
-                  </td>
-
-                  <td className="px-3 py-3 align-middle">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/6 flex items-center justify-center text-xs font-semibold">
-                        {u.name[0]}
-                      </div>
-                      <div>
-                        <div className="font-medium">{u.name}</div>
-                        <div className="text-xs text-gray-400">{u.email}</div>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="px-3 py-3 align-middle hidden">{/* placeholder if needed */}</td>
-
-                  <td className="px-3 py-3 align-middle">
-                    <div className={`inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full ${STATUS_STYLES[u.status] || "bg-white/5 text-gray-300"}`}>
-                      <span className="w-2 h-2 rounded-full block" />
-                      {u.status}
-                    </div>
-                  </td>
-
-                  <td className="px-3 py-3 align-middle">
-                    <select
-                      value={u.reviewer}
-                      onChange={(e) => assignReviewerToRow(u.id, e.target.value)}
-                      className="bg-transparent text-sm border border-white/6 px-2 py-1 rounded-md"
-                    >
-                      {reviewers.map((r) => <option key={r} value={r}>{r}</option>)}
-                    </select>
-                  </td>
-
-                  <td className="px-3 py-3 align-middle">{formatDate(u.joined)}</td>
-
-                  <td className="px-3 py-3 align-middle">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleView(u)} className="p-1 rounded-md hover:bg-white/5">
-                        <Eye size={14} />
-                      </button>
-                      <button onClick={() => handleEdit(u)} className="p-1 rounded-md hover:bg-white/5">
-                        <Edit2 size={14} />
-                      </button>
-                      <button onClick={() => deleteUser(u.id)} className="p-1 rounded-md hover:bg-red-700/10 text-red-400">
-                        <Trash2 size={14} />
-                      </button>
-
-                      {/* Dots menu (simple) */}
-                      <div className="relative">
-                        <button onClick={(e) => {
-                          // toggle small contextual menu near the row
-                          const menu = e.currentTarget.nextElementSibling;
-                          if (!menu) return;
-                          menu.classList.toggle("hidden");
-                        }} className="p-1 rounded-md hover:bg-white/5">
-                          <MoreHorizontal size={16} />
-                        </button>
-
-                        <div className="hidden absolute right-0 mt-1 w-40 bg-[#181818] border border-white/10 rounded-md shadow-lg z-20">
-                          <button onClick={() => handleView(u)} className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 flex items-center gap-2">
-                            <Eye size={14} /> View
-                          </button>
-                          <button onClick={() => handleEdit(u)} className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 flex items-center gap-2">
-                            <Edit2 size={14} /> Edit
-                          </button>
-                          <button onClick={() => deleteUser(u.id)} className="w-full text-left px-3 py-2 text-sm hover:bg-red-700/10 text-red-400 flex items-center gap-2">
-                            <Trash2 size={14} /> Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {paginated.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-gray-400">
-                    No users found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <div className="text-gray-400">
-            Showing <span className="text-white">{(page - 1) * PAGE_SIZE + 1}</span> -{" "}
-            <span className="text-white">{Math.min(page * PAGE_SIZE, sorted.length)}</span> of{" "}
-            <span className="text-white">{sorted.length}</span>
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-yellow-500/10">
+            <Clock size={20} className="text-yellow-400" />
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-3 py-1 rounded-md bg-white/3 disabled:opacity-30"
-            >
-              Prev
-            </button>
-
-            <div className="px-3 py-1 rounded-md bg-white/6 text-sm">
-              Page {page} / {totalPages}
-            </div>
-
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-3 py-1 rounded-md bg-white/3 disabled:opacity-30"
-            >
-              Next
-            </button>
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Unverified Users</p>
+            <p className="text-xl font-bold text-neutral-50 mt-0.5">{unverifiedUsers}</p>
+          </div>
+        </div>
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-green-500/10">
+            <CheckCircle size={20} className="text-green-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Adopted Pets</p>
+            <p className="text-xl font-bold text-neutral-50 mt-0.5">{stats.adoptedPets || 0}</p>
+          </div>
+        </div>
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-blue-500/10">
+            <Home size={20} className="text-blue-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Ready for Adoption</p>
+            <p className="text-xl font-bold text-neutral-50 mt-0.5">{stats.approvedPets || 0}</p>
           </div>
         </div>
       </div>

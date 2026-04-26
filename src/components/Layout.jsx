@@ -1,10 +1,16 @@
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
 
 export default function Layout({ children }) {
-  const [collapsed, setCollapsed] = useState(false);   // icons-only mode
-  const [mobileOpen, setMobileOpen] = useState(false); // mobile drawer
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useSelector((state) => state.auth);
+  const token = localStorage.getItem("admin_token");
+
+  const isAuthenticated = token && user;
 
   const toggleSidebar = () => {
     if (window.innerWidth < 1024) {
@@ -14,11 +20,17 @@ export default function Layout({ children }) {
     }
   };
 
-  return (
-   <div className="min-h-screen bg-black text-white">
-      <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} />
+  const closeSidebar = () => {
+    setMobileOpen(false);
+  };
 
-      {/* Content Wrapper */}
+  if (!isAuthenticated) {
+    return <div className="min-h-screen bg-black">{children}</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-neutral-50">
+      <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={closeSidebar} />
       <div
         className={`flex flex-col min-h-screen transition-all duration-300 ${
           collapsed ? "lg:ml-20" : "lg:ml-60"

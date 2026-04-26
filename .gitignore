@@ -25,3 +25,7 @@ pnpm-lock.yaml
 *.njsproj
 *.sln
 *.sw?
+
+.env
+.DS_Store
+.package-lock.json
