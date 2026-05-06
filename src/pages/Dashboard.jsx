@@ -147,34 +147,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Platform Health Score */}
-      <div className="bg-gradient-to-br from-orange-500/10 via-neutral-900 to-neutral-900 border border-orange-500/20 rounded-2xl p-6">
-        <div className="flex items-center gap-4">
-          <div className="p-4 rounded-2xl bg-orange-500/20">
-            <Award size={32} className="text-orange-400" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-lg font-semibold text-neutral-50">Platform Health Score</h2>
-              <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-xs font-medium rounded-full">
-                Live
-              </span>
-            </div>
-            <p className="text-sm text-neutral-400 mb-3">
-              Overall verification and approval health of the platform
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-3 bg-neutral-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-orange-500 to-yellow-400 rounded-full transition-all duration-700"
-                  style={{ width: `${overallScore}%` }}
-                />
-              </div>
-              <span className="text-xl font-bold text-orange-400">{overallScore}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -206,6 +178,46 @@ export default function Dashboard() {
             </div>
           </Link>
         ))}
+      </div>
+
+            {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-orange-500/10">
+            <AlertCircle size={20} className="text-orange-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Pending Pets</p>
+            <p className="text-xl font-bold text-neutral-50 mt-0.5">{pendingPets}</p>
+          </div>
+        </div>
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-yellow-500/10">
+            <Clock size={20} className="text-yellow-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Unverified Users</p>
+            <p className="text-xl font-bold text-neutral-50 mt-0.5">{unverifiedUsers}</p>
+          </div>
+        </div>
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-green-500/10">
+            <CheckCircle size={20} className="text-green-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Adopted Pets</p>
+            <p className="text-xl font-bold text-neutral-50 mt-0.5">{stats.adoptedPets || 0}</p>
+          </div>
+        </div>
+        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-blue-500/10">
+            <Home size={20} className="text-blue-400" />
+          </div>
+          <div>
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Ready for Adoption</p>
+            <p className="text-xl font-bold text-neutral-50 mt-0.5">{stats.approvedPets || 0}</p>
+          </div>
+        </div>
       </div>
 
       {/* Three Column Section */}
@@ -385,45 +397,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-orange-500/10">
-            <AlertCircle size={20} className="text-orange-400" />
-          </div>
-          <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Pending Pets</p>
-            <p className="text-xl font-bold text-neutral-50 mt-0.5">{pendingPets}</p>
-          </div>
-        </div>
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-yellow-500/10">
-            <Clock size={20} className="text-yellow-400" />
-          </div>
-          <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Unverified Users</p>
-            <p className="text-xl font-bold text-neutral-50 mt-0.5">{unverifiedUsers}</p>
-          </div>
-        </div>
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-green-500/10">
-            <CheckCircle size={20} className="text-green-400" />
-          </div>
-          <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Adopted Pets</p>
-            <p className="text-xl font-bold text-neutral-50 mt-0.5">{stats.adoptedPets || 0}</p>
-          </div>
-        </div>
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-blue-500/10">
-            <Home size={20} className="text-blue-400" />
-          </div>
-          <div>
-            <p className="text-[10px] text-neutral-400 uppercase tracking-wide">Ready for Adoption</p>
-            <p className="text-xl font-bold text-neutral-50 mt-0.5">{stats.approvedPets || 0}</p>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }
