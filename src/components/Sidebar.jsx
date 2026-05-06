@@ -99,20 +99,6 @@ export default function Sidebar({ collapsed, mobileOpen, onClose }) {
         </div>
 
         <div className="border-t border-neutral-800 p-3">
-          <NavLink
-            to="/settings"
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all ${
-                isActive
-                  ? "bg-orange-500/20 text-orange-400"
-                  : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
-              }`
-            }
-          >
-            <Settings size={18} />
-            {!collapsed && <span className="font-medium">Settings</span>}
-          </NavLink>
-
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 w-full mt-1 transition-colors"
