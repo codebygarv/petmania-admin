@@ -14,6 +14,7 @@ import { logoutAction } from "../redux/actions/authActions";
 export default function Sidebar({ collapsed, mobileOpen, onClose }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const adminUser = JSON.parse(localStorage.getItem("admin_user"));
 
   const handleLogout = () => {
     dispatch(logoutAction());
@@ -110,20 +111,27 @@ export default function Sidebar({ collapsed, mobileOpen, onClose }) {
           <div className="mt-3 bg-neutral-800 px-3 py-2 rounded-lg flex items-center justify-between cursor-pointer">
             <div className="flex items-center gap-2">
               <img
-                src="https://i.pravatar.cc/40?img=68"
+                src="./sidebarProfile.png"
                 alt="avatar"
                 className="w-7 h-7 rounded-full border border-orange-500/40"
               />
               {!collapsed && (
                 <div>
-                  <p className="text-sm font-semibold text-neutral-200">Admin</p>
-                  <p className="text-[11px] text-neutral-500">
-                    admin@example.com
+                  <p className="text-sm font-semibold text-neutral-200">
+                    {adminUser?.name}
                   </p>
+                  <p className="text-[10px] text-neutral-500">
+                    {adminUser?.email}
+                  </p>
+                  {/* <p className="text-[10px] text-neutral-500">
+                    {adminUser?.role}
+                  </p> */}
                 </div>
               )}
             </div>
-            {!collapsed && <MoreHorizontal size={18} className="text-neutral-500" />}
+            {!collapsed && (
+              <MoreHorizontal size={18} className="text-neutral-500" />
+            )}
           </div>
         </div>
       </aside>
