@@ -1,9 +1,16 @@
 import { authConstants } from "../constants/authConstants";
 
-const savedUser = localStorage.getItem("admin_user");
+let savedUser = null;
+try {
+  const item = localStorage.getItem("admin_user");
+  savedUser = item ? JSON.parse(item) : null;
+} catch {
+  savedUser = null;
+}
+
 const initialState = {
   loading: false,
-  user: savedUser ? JSON.parse(savedUser) : null,
+  user: savedUser,
   error: null,
 };
 

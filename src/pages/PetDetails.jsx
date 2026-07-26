@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -31,7 +30,7 @@ export default function PetDetails() {
   });
 
   const approveMutation = useMutation({
-    mutationFn: (value) => adminPetsApi.approvePet(id),
+    mutationFn: () => adminPetsApi.approvePet(id),
     onSuccess: () => {
       queryClient.invalidateQueries(["pet", id]);
       queryClient.invalidateQueries(["pets"]);

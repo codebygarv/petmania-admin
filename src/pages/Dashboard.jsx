@@ -75,10 +75,6 @@ export default function Dashboard() {
     ? Math.round(((stats.adoptedPets || 0) / stats.totalPets) * 100)
     : 0;
 
-  const overallScore = stats.totalUsers
-    ? Math.round((emailVerificationRate + aadharRate + petApprovalRate) / 3)
-    : 0;
-
   const pendingUsers = (stats.totalUsers || 0) - (stats.verifiedUsers || 0);
   const pendingPets = stats.pendingPets || 0;
   const unverifiedUsers = (stats.totalUsers || 0) - (stats.adharVerifiedUsers || 0);

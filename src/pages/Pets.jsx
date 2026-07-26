@@ -19,6 +19,7 @@ import { TableSkeleton } from "../components/ui/Skeleton";
 
 export default function Pets() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);

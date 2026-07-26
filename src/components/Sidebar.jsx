@@ -14,7 +14,12 @@ import { logoutAction } from "../redux/actions/authActions";
 export default function Sidebar({ collapsed, mobileOpen, onClose }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const adminUser = JSON.parse(localStorage.getItem("admin_user"));
+  let adminUser = null;
+  try {
+    adminUser = JSON.parse(localStorage.getItem("admin_user"));
+  } catch {
+    adminUser = null;
+  }
 
   const handleLogout = () => {
     dispatch(logoutAction());
@@ -111,7 +116,7 @@ export default function Sidebar({ collapsed, mobileOpen, onClose }) {
           <div className="mt-3 bg-neutral-800 px-3 py-2 rounded-lg flex items-center justify-between cursor-pointer">
             <div className="flex items-center gap-2">
               <img
-                src="./sidebarProfile.png"
+                src="/sidebarProfile.png"
                 alt="avatar"
                 className="w-7 h-7 rounded-full border border-orange-500/40"
               />
