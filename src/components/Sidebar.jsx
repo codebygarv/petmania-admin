@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 import { logoutAction } from "../redux/actions/authActions";
 
+import { useQuery } from "@tanstack/react-query";
+import { adminDashboardApi } from "../api/adminService";
+
 export default function Sidebar({ collapsed, mobileOpen, onClose }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -20,6 +23,14 @@ export default function Sidebar({ collapsed, mobileOpen, onClose }) {
   } catch {
     adminUser = null;
   }
+
+  const { data: statsData } = useQuery({
+    queryKey: ["dashboardStats"],
+    queryFn: () => adminDashboardApi.getStats(),
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const stats = statsData?.data || {};
 
   const handleLogout = () => {
     dispatch(logoutAction());
@@ -42,8 +53,20 @@ export default function Sidebar({ collapsed, mobileOpen, onClose }) {
     {
       title: "Management",
       links: [
-        { to: "/users", label: "Users", icon: <Users size={18} /> },
-        { to: "/pets", label: "Pets", icon: <PawPrint size={18} /> },
+        {
+          to: "/users",
+          label: "Users",
+          icon: <Users size={18} />,
+          badge: (stats.totalUsers || 0) - (stats.verifiedUsers || 0) || null,
+          badgeColor: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
+        },
+        {
+          to: "/pets",
+          label: "Pets",
+          icon: <PawPrint size={18} />,
+          badge: stats.pendingPets || null,
+          badgeColor: "bg-orange-500/20 text-orange-400 border border-orange-500/30",
+        },
       ],
     },
   ];
@@ -94,7 +117,14 @@ export default function Sidebar({ collapsed, mobileOpen, onClose }) {
                     >
                       {link.icon}
                       {!collapsed && (
-                        <span className="font-medium">{link.label}</span>
+                        <div className="flex items-center justify-between flex-1">
+                          <span className="font-medium">{link.label}</span>
+                          {link.badge !== null && link.badge !== undefined && (
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${link.badgeColor}`}>
+                              {link.badge}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </NavLink>
                   ))}

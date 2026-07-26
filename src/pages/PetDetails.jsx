@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -17,11 +18,17 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { adminPetsApi } from "../api/adminService";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import ImageLightbox from "../components/ui/ImageLightbox";
+import { useToast } from "../components/ui/Toast";
 
 export default function PetDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["pet", id],
@@ -34,7 +41,9 @@ export default function PetDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries(["pet", id]);
       queryClient.invalidateQueries(["pets"]);
+      addToast("Pet approved successfully!", "success");
     },
+    onError: () => addToast("Failed to approve pet", "error"),
   });
 
   const rejectMutation = useMutation({
@@ -42,7 +51,9 @@ export default function PetDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries(["pet", id]);
       queryClient.invalidateQueries(["pets"]);
+      addToast("Pet approval status updated", "info");
     },
+    onError: () => addToast("Failed to update status", "error"),
   });
 
   const handleApproveToggle = (currentValue) => {
@@ -319,17 +330,27 @@ export default function PetDetails() {
           {/* Images Card */}
           {pet.images && pet.images.length > 0 && (
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-              <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wide mb-4">
-                Pet Images
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wide">
+                  Pet Images Gallery
+                </h3>
+                <span className="text-xs text-orange-400">Click to view full screen</span>
+              </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {pet.images.map((img, index) => (
-                  <div key={index}>
+                  <div
+                    key={index}
+                    onClick={() => {
+                      setLightboxIndex(index);
+                      setLightboxOpen(true);
+                    }}
+                    className="cursor-pointer group relative overflow-hidden rounded-xl border border-neutral-800 hover:border-orange-500/50 transition-all"
+                  >
                     <img
                       src={img}
                       alt={`${pet.name} - Image ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg border border-neutral-700"
+                      className="w-full h-32 object-cover group-hover:scale-105 transition-transform"
                     />
                   </div>
                 ))}
@@ -347,6 +368,15 @@ export default function PetDetails() {
             Back to Pets
           </button>
         </div>
+      )}
+
+      {pet && pet.images && (
+        <ImageLightbox
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          initialIndex={lightboxIndex}
+          images={pet.images}
+        />
       )}
     </div>
   );

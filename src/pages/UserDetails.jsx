@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Mail,
@@ -14,14 +16,19 @@ import {
   PawPrint,
   Image as ImageIcon,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
 import { adminUsersApi } from "../api/adminService";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import ImageLightbox from "../components/ui/ImageLightbox";
+import { useToast } from "../components/ui/Toast";
 
 export default function UserDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["user", id],
@@ -41,7 +48,9 @@ export default function UserDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries(["user", id]);
       queryClient.invalidateQueries(["users"]);
+      addToast("User verification updated", "success");
     },
+    onError: () => addToast("Failed to update verification", "error"),
   });
 
   const handleToggle = (field, currentValue) => {
@@ -309,41 +318,39 @@ export default function UserDetails() {
             user.adharCardBackImage ||
             user.profileImage) && (
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
-              <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wide mb-4">
-                User Images
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wide">
+                  User Verification Images
+                </h3>
+                <span className="text-xs text-orange-400">Click to inspect / zoom</span>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {user.profileImage && (
-                  <div>
-                    <p className="text-xs text-neutral-400 mb-2">Profile</p>
-                    <img
-                      src={user.profileImage}
-                      alt="Profile"
-                      className="w-full h-32 object-cover rounded-lg border border-neutral-700"
-                    />
-                  </div>
-                )}
-                {user.adharCardFrontImage && (
-                  <div>
-                    <p className="text-xs text-neutral-400 mb-2">Aadhar Front</p>
-                    <img
-                      src={user.adharCardFrontImage}
-                      alt="Aadhar Front"
-                      className="w-full h-32 object-cover rounded-lg border border-neutral-700"
-                    />
-                  </div>
-                )}
-                {user.adharCardBackImage && (
-                  <div>
-                    <p className="text-xs text-neutral-400 mb-2">Aadhar Back</p>
-                    <img
-                      src={user.adharCardBackImage}
-                      alt="Aadhar Back"
-                      className="w-full h-32 object-cover rounded-lg border border-neutral-700"
-                    />
-                  </div>
-                )}
+                {[
+                  { label: "Profile", src: user.profileImage },
+                  { label: "Aadhar Front", src: user.adharCardFrontImage },
+                  { label: "Aadhar Back", src: user.adharCardBackImage },
+                ]
+                  .filter((item) => !!item.src)
+                  .map((item, idx) => (
+                    <div
+                      key={item.label}
+                      className="cursor-pointer group relative overflow-hidden rounded-xl border border-neutral-800 hover:border-orange-500/50 transition-all"
+                      onClick={() => {
+                        setLightboxIndex(idx);
+                        setLightboxOpen(true);
+                      }}
+                    >
+                      <p className="text-xs font-medium text-neutral-300 p-2 bg-neutral-950/80">
+                        {item.label}
+                      </p>
+                      <img
+                        src={item.src}
+                        alt={item.label}
+                        className="w-full h-36 object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                  ))}
               </div>
             </div>
           )}
@@ -424,6 +431,19 @@ export default function UserDetails() {
             Back to Users
           </button>
         </div>
+      )}
+      {/* Image Lightbox Inspector */}
+      {user && (
+        <ImageLightbox
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          initialIndex={lightboxIndex}
+          images={
+            [user.profileImage, user.adharCardFrontImage, user.adharCardBackImage].filter(
+              Boolean
+            )
+          }
+        />
       )}
     </div>
   );
