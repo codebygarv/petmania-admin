@@ -13,11 +13,16 @@ import {
   Download,
   CheckSquare,
   Square,
+  Shield,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { adminUsersApi } from "../api/adminService";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import ConfirmModal from "../components/ui/ConfirmModal";
+import QuickViewModal from "../components/ui/QuickViewModal";
+import Tabs from "../components/ui/Tabs";
+import Badge from "../components/ui/Badge";
 import { useToast } from "../components/ui/Toast";
 import { exportToCsv } from "../utils/exportToCsv";
 
@@ -34,6 +39,7 @@ export default function Users() {
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [deletingUserId, setDeletingUserId] = useState(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [quickViewUser, setQuickViewUser] = useState(null);
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["users", search, page, pageSize, filter],
@@ -130,7 +136,7 @@ export default function Users() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <p className="text-red-400">Failed to load users</p>
+        <p className="text-red-400 font-semibold">Failed to load users</p>
         <p className="text-sm text-neutral-500">Please check if the backend server is running</p>
       </div>
     );
@@ -138,18 +144,19 @@ export default function Users() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Top Title Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-800/80 pb-5">
         <div>
           <h1 className="text-2xl font-bold text-neutral-50">Users Management</h1>
           <p className="text-sm text-neutral-400 mt-1">
-            Manage and verify user accounts
+            Manage, inspect, and verify user identity accounts
           </p>
         </div>
 
         <button
           onClick={handleExportCSV}
           disabled={!users.length}
-          className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 self-start sm:self-auto"
+          className="flex items-center gap-2 px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-200 rounded-xl text-sm font-semibold transition-all shadow-md disabled:opacity-50 self-start sm:self-auto"
         >
           <Download size={16} />
           Export CSV
@@ -161,7 +168,7 @@ export default function Users() {
         <div className="relative w-full lg:w-80">
           <Search
             size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500"
           />
           <input
             type="text"
@@ -171,46 +178,40 @@ export default function Users() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full bg-neutral-900 border border-neutral-800 rounded-lg pl-10 pr-4 py-2.5 text-neutral-200 placeholder-neutral-500 outline-none focus:border-orange-500 transition-colors"
+            className="w-full bg-neutral-900/80 border border-neutral-800 rounded-xl pl-10 pr-4 py-2.5 text-neutral-200 placeholder-neutral-500 outline-none focus:border-orange-500/80 transition-colors text-sm"
           />
         </div>
 
-        <div className="flex gap-2">
-          {["all", "verified", "pending"].map((f) => (
-            <button
-              key={f}
-              onClick={() => {
-                setFilter(f);
-                setPage(1);
-              }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === f
-                  ? "bg-orange-500 text-white"
-                  : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
-              }`}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          tabs={[
+            { id: "all", label: "All Users" },
+            { id: "verified", label: "Email Verified" },
+            { id: "adhar", label: "Aadhar Verified" },
+          ]}
+          activeTab={filter}
+          onChange={(newTab) => {
+            setFilter(newTab);
+            setPage(1);
+          }}
+        />
       </div>
 
       {/* Bulk Action Bar */}
       {selectedUserIds.length > 0 && (
-        <div className="flex items-center justify-between p-4 bg-orange-500/10 border border-orange-500/30 rounded-2xl animate-fade-in">
-          <span className="text-sm font-medium text-orange-400">
-            {selectedUserIds.length} user(s) selected
+        <div className="flex items-center justify-between p-4 bg-orange-500/10 border border-orange-500/30 rounded-2xl animate-fade-in shadow-xl shadow-orange-500/5 backdrop-blur-md">
+          <span className="text-sm font-semibold text-orange-400">
+            {selectedUserIds.length} user account(s) selected
           </span>
           <div className="flex items-center gap-3">
             <button
               onClick={handleBulkVerify}
-              className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
+              className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-md"
             >
               Verify Selected
             </button>
             <button
               onClick={() => setBulkDeleting(true)}
-              className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors"
+              className="px-3.5 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-md"
             >
               Delete Selected
             </button>
@@ -218,8 +219,8 @@ export default function Users() {
         </div>
       )}
 
-      {/* Table Section */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
+      {/* Glassmorphic Table Frame */}
+      <div className="glass-card rounded-2xl overflow-hidden shadow-2xl">
         {isLoading ? (
           <div className="p-4">
             <TableSkeleton rows={5} cols={7} />
@@ -229,8 +230,8 @@ export default function Users() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-neutral-800 text-xs text-neutral-400 uppercase tracking-wide">
-                    <th className="px-4 py-3 w-10">
+                  <tr className="border-b border-neutral-800 text-xs text-neutral-400 uppercase tracking-wider bg-neutral-950/40">
+                    <th className="px-4 py-3.5 w-10">
                       <button onClick={toggleSelectAll} className="text-neutral-400 hover:text-white">
                         {users.length > 0 && selectedUserIds.length === users.length ? (
                           <CheckSquare size={18} className="text-orange-500" />
@@ -239,20 +240,20 @@ export default function Users() {
                         )}
                       </button>
                     </th>
-                    <th className="px-4 py-3 font-medium">User</th>
-                    <th className="px-4 py-3 font-medium">Email</th>
-                    <th className="px-4 py-3 font-medium">Phone</th>
-                    <th className="px-4 py-3 font-medium">Email Verified</th>
-                    <th className="px-4 py-3 font-medium">Aadhar Verified</th>
-                    <th className="px-4 py-3 font-medium">Joined</th>
-                    <th className="px-4 py-3 font-medium">Actions</th>
+                    <th className="px-4 py-3.5 font-semibold">User</th>
+                    <th className="px-4 py-3.5 font-semibold">Email</th>
+                    <th className="px-4 py-3.5 font-semibold">Phone</th>
+                    <th className="px-4 py-3.5 font-semibold">Email Verified</th>
+                    <th className="px-4 py-3.5 font-semibold">Aadhar Verified</th>
+                    <th className="px-4 py-3.5 font-semibold">Joined</th>
+                    <th className="px-4 py-3.5 font-semibold">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-800">
+                <tbody className="divide-y divide-neutral-800/80">
                   {users.map((user) => (
                     <tr
                       key={user._id}
-                      className={`hover:bg-neutral-800/50 transition-colors ${
+                      className={`hover:bg-neutral-800/40 transition-colors ${
                         selectedUserIds.includes(user._id) ? "bg-orange-500/5" : ""
                       }`}
                     >
@@ -270,10 +271,10 @@ export default function Users() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center font-semibold text-sm shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
                             {user.name?.[0]?.toUpperCase() || "U"}
                           </div>
-                          <span className="font-medium text-neutral-200">
+                          <span className="font-semibold text-neutral-100">
                             {user.name || "Unknown"}
                           </span>
                         </div>
@@ -284,28 +285,24 @@ export default function Users() {
                       </td>
                       <td className="px-4 py-3">
                         {user.isVerified ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">
-                            <CheckCircle size={12} />
-                            Verified
-                          </span>
+                          <Badge variant="success">
+                            <CheckCircle size={12} /> Verified
+                          </Badge>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-yellow-500/10 text-yellow-400 rounded-full text-xs font-medium">
-                            <Clock size={12} />
-                            Pending
-                          </span>
+                          <Badge variant="warning">
+                            <Clock size={12} /> Pending
+                          </Badge>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         {user.isAdharVerified ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">
-                            <CheckCircle size={12} />
-                            Verified
-                          </span>
+                          <Badge variant="info">
+                            <Shield size={12} /> Verified
+                          </Badge>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-yellow-500/10 text-yellow-400 rounded-full text-xs font-medium">
-                            <Clock size={12} />
-                            Pending
-                          </span>
+                          <Badge variant="warning">
+                            <Clock size={12} /> Pending
+                          </Badge>
                         )}
                       </td>
                       <td className="px-4 py-3 text-neutral-400">
@@ -314,11 +311,11 @@ export default function Users() {
                           : "-"}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => handleVerify(user._id)}
                             disabled={verifyMutation.isPending}
-                            className="p-1.5 rounded-md hover:bg-green-500/10 text-neutral-400 hover:text-green-400 transition-colors disabled:opacity-50"
+                            className="p-2 rounded-lg hover:bg-emerald-500/10 text-neutral-400 hover:text-emerald-400 transition-colors disabled:opacity-50"
                             title="Verify user"
                           >
                             <RefreshCw
@@ -329,16 +326,23 @@ export default function Users() {
                             />
                           </button>
                           <button
+                            onClick={() => setQuickViewUser(user)}
+                            className="p-2 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-orange-400 transition-colors"
+                            title="Quick View Inspector"
+                          >
+                            <SlidersHorizontal size={16} />
+                          </button>
+                          <button
                             onClick={() => navigate(`/users/${user._id}`)}
-                            className="p-1.5 rounded-md hover:bg-neutral-700 text-neutral-400 hover:text-blue-400 transition-colors"
-                            title="View details"
+                            className="p-2 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-sky-400 transition-colors"
+                            title="Full Page Details"
                           >
                             <Eye size={16} />
                           </button>
                           <button
                             onClick={() => setDeletingUserId(user._id)}
                             disabled={deleteMutation.isPending}
-                            className="p-1.5 rounded-md hover:bg-red-500/10 text-neutral-400 hover:text-red-400 transition-colors"
+                            className="p-2 rounded-lg hover:bg-rose-500/10 text-neutral-400 hover:text-rose-400 transition-colors"
                             title="Delete user"
                           >
                             <Trash2 size={16} />
@@ -359,9 +363,9 @@ export default function Users() {
             </div>
 
             {/* Pagination Controls */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-800">
+            <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-800/80 bg-neutral-950/40">
               <div className="flex items-center gap-3">
-                <span className="text-sm text-neutral-400">Show:</span>
+                <span className="text-xs text-neutral-400">Show:</span>
                 <div className="relative">
                   <select
                     value={pageSize}
@@ -369,7 +373,7 @@ export default function Users() {
                       setPageSize(Number(e.target.value));
                       setPage(1);
                     }}
-                    className="appearance-none bg-neutral-800 border border-neutral-700 text-neutral-200 text-sm rounded-lg px-3 py-2 pr-8 cursor-pointer hover:bg-neutral-700 transition-colors"
+                    className="appearance-none bg-neutral-800 border border-neutral-700 text-neutral-200 text-xs rounded-lg px-3 py-1.5 pr-8 cursor-pointer hover:bg-neutral-700 transition-colors"
                   >
                     <option value={10}>10</option>
                     <option value={25}>25</option>
@@ -378,21 +382,21 @@ export default function Users() {
                   <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" />
                 </div>
               </div>
-              <p className="text-sm text-neutral-400">
+              <p className="text-xs text-neutral-400 font-medium">
                 Page {page} of {totalPages} ({total} users)
               </p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1 || isFetching}
-                  className="p-2 rounded-md bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-50 transition-colors"
+                  className="p-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-50 transition-colors"
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages || isFetching}
-                  className="p-2 rounded-md bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-50 transition-colors"
+                  className="p-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 disabled:opacity-50 transition-colors"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -401,6 +405,14 @@ export default function Users() {
           </>
         )}
       </div>
+
+      {/* Quick View Drawer Inspector */}
+      <QuickViewModal
+        isOpen={!!quickViewUser}
+        onClose={() => setQuickViewUser(null)}
+        data={quickViewUser}
+        type="user"
+      />
 
       {/* Confirmation Modal */}
       <ConfirmModal
