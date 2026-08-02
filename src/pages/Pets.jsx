@@ -38,6 +38,7 @@ export default function Pets() {
   const [pageSize, setPageSize] = useState(10);
   const [filter, setFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   const [selectedPetIds, setSelectedPetIds] = useState([]);
   const [rejectingPet, setRejectingPet] = useState(null);
@@ -46,7 +47,7 @@ export default function Pets() {
   const [quickViewPet, setQuickViewPet] = useState(null);
 
   const { data, isLoading, isFetching, error } = useQuery({
-    queryKey: ["pets", search, page, pageSize, filter, cityFilter],
+    queryKey: ["pets", search, page, pageSize, filter, cityFilter, typeFilter],
     queryFn: () =>
       adminPetsApi.getAll({
         search,
@@ -59,6 +60,7 @@ export default function Pets() {
             ? "false"
             : undefined,
         city: cityFilter,
+        type: typeFilter !== "all" ? typeFilter : undefined,
       }),
     keepPreviousData: true,
     retry: 1,
@@ -186,7 +188,7 @@ export default function Pets() {
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-wrap">
           <div className="relative w-full sm:w-80">
             <Search
               size={18}
@@ -203,7 +205,30 @@ export default function Pets() {
               className="w-full bg-neutral-900/80 border border-neutral-800 rounded-xl pl-10 pr-4 py-2.5 text-neutral-200 placeholder-neutral-500 outline-none focus:border-orange-500/80 transition-colors text-sm"
             />
           </div>
-          <div className="relative w-full sm:w-56">
+          
+          <div className="relative w-full sm:w-48">
+            <select
+              value={typeFilter}
+              onChange={(e) => {
+                setTypeFilter(e.target.value);
+                setPage(1);
+              }}
+              className="w-full bg-neutral-900/80 border border-neutral-800 rounded-xl px-4 py-2.5 text-neutral-200 outline-none focus:border-orange-500/80 transition-colors text-sm appearance-none cursor-pointer"
+            >
+              <option value="all">All Types</option>
+              <option value="dog">Dog</option>
+              <option value="cat">Cat</option>
+              <option value="bird">Bird</option>
+              <option value="rabbit">Rabbit</option>
+              <option value="fish">Fish</option>
+              <option value="hamster">Hamster</option>
+              <option value="horse">Horse</option>
+              <option value="other">Other</option>
+            </select>
+            <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
+          </div>
+
+          <div className="relative w-full sm:w-48">
             <MapPin
               size={18}
               className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500"
