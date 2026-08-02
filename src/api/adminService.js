@@ -14,6 +14,7 @@ export const adminUsersApi = {
   getUserDetails: (id) => adminApi.get(`/api/admin/users/${id}`),
   getUserPets: (id) => adminApi.get(`/api/admin/users/${id}/pets`),
   verifyUser: (id, data) => adminApi.put(`/api/admin/users/${id}/verify`, data),
+  requestRecheck: (id, reason) => adminApi.put(`/api/admin/users/${id}/recheck`, { reason }),
   deleteUser: (id) => adminApi.delete(`/api/admin/users/${id}`),
 };
 

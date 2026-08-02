@@ -15,12 +15,14 @@ import {
   Square,
   Shield,
   SlidersHorizontal,
+  AlertTriangle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { adminUsersApi } from "../api/adminService";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import QuickViewModal from "../components/ui/QuickViewModal";
+import RecheckModal from "../components/ui/RecheckModal";
 import Tabs from "../components/ui/Tabs";
 import Badge from "../components/ui/Badge";
 import { useToast } from "../components/ui/Toast";
@@ -40,6 +42,7 @@ export default function Users() {
   const [deletingUserId, setDeletingUserId] = useState(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [quickViewUser, setQuickViewUser] = useState(null);
+  const [recheckingUser, setRecheckingUser] = useState(null);
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["users", search, page, pageSize, filter],
@@ -62,6 +65,20 @@ export default function Users() {
       addToast("User verified successfully!", "success");
     },
     onError: () => addToast("Failed to verify user", "error"),
+  });
+
+  const recheckMutation = useMutation({
+    mutationFn: ({ id, reason }) => adminUsersApi.requestRecheck(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["users"]);
+      addToast("Re-check request sent & email dispatched to user", "success");
+      setRecheckingUser(null);
+    },
+    onError: (err) =>
+      addToast(
+        err?.response?.data?.error?.message || "Failed to request re-check",
+        "error"
+      ),
   });
 
   const deleteMutation = useMutation({
@@ -299,10 +316,16 @@ export default function Users() {
                           <Badge variant="info">
                             <Shield size={12} /> Verified
                           </Badge>
-                        ) : (
+                        ) : user.verificationStatus === "recheck_requested" ? (
+                          <Badge variant="danger">
+                            <AlertTriangle size={12} /> Re-check
+                          </Badge>
+                        ) : user.adharCardFrontImage ? (
                           <Badge variant="warning">
                             <Clock size={12} /> Pending
                           </Badge>
+                        ) : (
+                          <Badge variant="secondary">Unverified</Badge>
                         )}
                       </td>
                       <td className="px-4 py-3 text-neutral-400">
@@ -324,6 +347,13 @@ export default function Users() {
                                 verifyMutation.isPending ? "animate-spin" : ""
                               }
                             />
+                          </button>
+                          <button
+                            onClick={() => setRecheckingUser(user)}
+                            className="p-2 rounded-lg hover:bg-amber-500/10 text-neutral-400 hover:text-amber-400 transition-colors"
+                            title="Request Re-check & Send Email"
+                          >
+                            <AlertTriangle size={16} />
                           </button>
                           <button
                             onClick={() => setQuickViewUser(user)}
@@ -428,6 +458,18 @@ export default function Users() {
             ? `Are you sure you want to delete ${selectedUserIds.length} user accounts?`
             : "Are you sure you want to delete this user account?"
         }
+      />
+
+      {/* Recheck Modal */}
+      <RecheckModal
+        isOpen={!!recheckingUser}
+        onClose={() => setRecheckingUser(null)}
+        onSubmit={(reason) =>
+          recheckMutation.mutate({ id: recheckingUser._id, reason })
+        }
+        userName={recheckingUser?.name}
+        userEmail={recheckingUser?.email}
+        isLoading={recheckMutation.isPending}
       />
     </div>
   );

@@ -15,10 +15,12 @@ import {
   ToggleRight,
   PawPrint,
   Image as ImageIcon,
+  AlertTriangle,
 } from "lucide-react";
 import { adminUsersApi } from "../api/adminService";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import ImageLightbox from "../components/ui/ImageLightbox";
+import RecheckModal from "../components/ui/RecheckModal";
 import { useToast } from "../components/ui/Toast";
 
 export default function UserDetails() {
@@ -29,6 +31,7 @@ export default function UserDetails() {
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [recheckModalOpen, setRecheckModalOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["user", id],
@@ -51,6 +54,21 @@ export default function UserDetails() {
       addToast("User verification updated", "success");
     },
     onError: () => addToast("Failed to update verification", "error"),
+  });
+
+  const recheckMutation = useMutation({
+    mutationFn: (reason) => adminUsersApi.requestRecheck(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["user", id]);
+      queryClient.invalidateQueries(["users"]);
+      addToast("Re-check request sent & email dispatched to user", "success");
+      setRecheckModalOpen(false);
+    },
+    onError: (err) =>
+      addToast(
+        err?.response?.data?.error?.message || "Failed to request re-check",
+        "error"
+      ),
   });
 
   const handleToggle = (field, currentValue) => {
@@ -112,9 +130,47 @@ export default function UserDetails() {
 
             {/* Verification Toggles */}
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wide">
-                Verification Controls
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wide">
+                  Verification Controls
+                </h3>
+                {user.verificationStatus === "verified" || (user.isAdharVerified && user.userVerified) ? (
+                  <span className="px-2.5 py-1 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold rounded-full flex items-center gap-1.5">
+                    <CheckCircle size={13} /> Verified
+                  </span>
+                ) : user.verificationStatus === "recheck_requested" ? (
+                  <span className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold rounded-full flex items-center gap-1.5">
+                    <AlertTriangle size={13} /> Re-check Requested
+                  </span>
+                ) : user.adharCardFrontImage ? (
+                  <span className="px-2.5 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold rounded-full flex items-center gap-1.5">
+                    <Clock size={13} /> Pending Review
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-1 bg-neutral-800 text-neutral-400 text-xs rounded-full">
+                    Unverified
+                  </span>
+                )}
+              </div>
+
+              {/* Active Re-check Reason Alert */}
+              {(user.verificationStatus === "recheck_requested" || user.verificationRejectReason) && (
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-1.5 animate-fade-in">
+                  <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs uppercase tracking-wide">
+                    <AlertTriangle size={14} />
+                    <span>Active Re-check Request</span>
+                  </div>
+                  <p className="text-xs text-neutral-200 leading-relaxed">
+                    <span className="text-neutral-400">Reason sent to user:</span>{" "}
+                    <span className="font-medium text-amber-200">"{user.verificationRejectReason}"</span>
+                  </p>
+                  {user.verificationReviewedAt && (
+                    <p className="text-[11px] text-neutral-500">
+                      Dispatched: {new Date(user.verificationReviewedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-center justify-between p-4 bg-neutral-800/50 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -204,6 +260,19 @@ export default function UserDetails() {
                       className="text-neutral-500"
                     />
                   )}
+                </button>
+              </div>
+
+              {/* Action Buttons: Request Recheck */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRecheckModalOpen(true)}
+                  disabled={recheckMutation.isPending}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 hover:text-amber-200 text-sm font-medium transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                >
+                  <AlertTriangle size={16} />
+                  <span>Request Re-check with Reason & Email</span>
                 </button>
               </div>
 
@@ -432,6 +501,18 @@ export default function UserDetails() {
           </button>
         </div>
       )}
+      {/* Recheck Modal with Reason & Email */}
+      {user && (
+        <RecheckModal
+          isOpen={recheckModalOpen}
+          onClose={() => setRecheckModalOpen(false)}
+          onSubmit={(reason) => recheckMutation.mutate(reason)}
+          userName={user.name}
+          userEmail={user.email}
+          isLoading={recheckMutation.isPending}
+        />
+      )}
+
       {/* Image Lightbox Inspector */}
       {user && (
         <ImageLightbox

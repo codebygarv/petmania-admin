@@ -1,5 +1,5 @@
 import React from "react";
-import { X, ExternalLink, Calendar, MapPin, Mail, Phone, Shield, CheckCircle, Clock } from "lucide-react";
+import { X, ExternalLink, Calendar, MapPin, Mail, Phone, Shield, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function QuickViewModal({ isOpen, onClose, data, type = "pet" }) {
@@ -55,7 +55,7 @@ export default function QuickViewModal({ isOpen, onClose, data, type = "pet" }) 
           )}
 
           {/* Status Badges */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isPet ? (
               data.isApproved ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold rounded-full">
@@ -81,7 +81,22 @@ export default function QuickViewModal({ isOpen, onClose, data, type = "pet" }) 
                 <Shield size={12} /> Aadhar Verified
               </span>
             )}
+
+            {!isPet && data.verificationStatus === "recheck_requested" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold rounded-full">
+                <AlertTriangle size={12} /> Recheck Requested
+              </span>
+            )}
           </div>
+
+          {!isPet && data.verificationRejectReason && (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs space-y-1">
+              <span className="text-amber-400 font-semibold uppercase tracking-wider text-[10px] block">
+                Active Recheck Feedback
+              </span>
+              <p className="text-neutral-200">"{data.verificationRejectReason}"</p>
+            </div>
+          )}
 
           {/* Key Quick Fields */}
           <div className="space-y-3 bg-neutral-950/60 p-4 rounded-2xl border border-neutral-800/80">
