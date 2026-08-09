@@ -26,7 +26,7 @@ export default function Navbar({ toggleSidebar }) {
 
   return (
     <>
-      <header className="flex items-center justify-between px-6 py-3 bg-neutral-900 border-b border-neutral-800 sticky top-0 z-30">
+      <header className="h-14 flex items-center justify-between px-6 bg-neutral-900 border-b border-neutral-800 sticky top-0 z-30">
         <div className="flex items-center gap-4">
           <button
             className="text-neutral-400 hover:text-orange-400 transition-colors"
@@ -45,9 +45,6 @@ export default function Navbar({ toggleSidebar }) {
           >
             <Search size={14} />
             <span>Search...</span>
-            <kbd className="bg-neutral-900 px-1.5 py-0.5 rounded border border-neutral-700 font-mono text-[10px] text-neutral-300">
-              ⌘K
-            </kbd>
           </button>
 
           {/* Notifications Dropdown */}

@@ -88,7 +88,7 @@ export default function Sidebar({ collapsed, mobileOpen, onClose }) {
         `}
       >
         <div>
-          <div className="p-3 font-semibold text-lg border-b border-neutral-800">
+          <div className="h-14 px-4 flex items-center font-semibold text-lg border-b border-neutral-800">
             {!collapsed ? "Admin Dashboard" : "AD"}
           </div>
 
